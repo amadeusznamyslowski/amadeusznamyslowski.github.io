@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Formularz Składników</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h2>Składniki Perfum</h2>
+    <form id="ingredientsForm">
+        <div id="ingredientInputs">
+            <div class="form-group">
+                <label for="ingredient_0_name">Nazwa składnika:</label>
+                <input type="text" class="form-control" id="ingredient_0_name" name="ingredient_0_name" required>
+                <label for="ingredient_0_amount">Ilość (ml):</label>
+                <input type="number" class="form-control" step="0.01" id="ingredient_0_amount" name="ingredient_0_amount" required>
+            </div>
+        </div>
+        <button type="button" onclick="addIngredientInput()" class="btn btn-primary">Dodaj składnik</button>
+        <button type="submit" class="btn btn-success">Oblicz</button>
+    </form>
+    <table class="table table-striped" id="resultsTable" style="margin-top: 20px; display:none;">
+        <thead>
+            <tr>
+                <th>Składnik</th>
+                <th>Ilość wprowadzona (ml)</th>
+                <th>10 ml</th>
+                <th>30 ml</th>
+                <th>100 ml</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+let ingredientCount = 1;
+
+function addIngredientInput() {
+    const container = document.getElementById('ingredientInputs');
+    const html = `
+        <div class="form-group">
+            <label for="ingredient_${ingredientCount}_name">Nazwa składnika:</label>
+            <input type="text" class="form-control" id="ingredient_${ingredientCount}_name" name="ingredient_${ingredientCount}_name" required>
+            <label for="ingredient_${ingredientCount}_amount">Ilość (ml):</label>
+            <input type="number" class="form-control" step="0.01" id="ingredient_${ingredientCount}_amount" name="ingredient_${ingredientCount}_amount" required>
+        </div>
+    `;
+    container.innerHTML += html;
+    ingredientCount++;
+}
+
+document.getElementById('ingredientsForm').onsubmit = function(event) {
+    event.preventDefault();
+    calculateRecipes();
+};
+
+function calculateRecipes() {
+    const ingredients = [];
+    for (let i = 0; i < ingredientCount; i++) {
+        const name = document.getElementById(`ingredient_${i}_name`).value;
+        const amount = parseFloat(document.getElementById(`ingredient_${i}_amount`).value);
+        if (name && amount) {
+            ingredients.push({ name, amount });
+        }
+    }
+
+    const totalOilAmount = ingredients.reduce((sum, ing) => sum + ing.amount, 0);
+    const bottleSizes = [10, 30, 100];
+    const tableBody = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+    tableBody.innerHTML = '';  // Clear previous results
+
+    ingredients.forEach(ing => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = ing.name;
+        row.insertCell().textContent = ing.amount.toFixed(2);
+
+        bottleSizes.forEach(size => {
+            const oilPerBottle = size / 6;
+            const scale = oilPerBottle / totalOilAmount;
+            const amountForSize = ing.amount * scale;
+            row.insertCell().textContent = amountForSize.toFixed(6);
+        });
+    });
+
+    const alcoholRow = tableBody.insertRow();
+    alcoholRow.insertCell().textContent = 'Alkohol';
+    alcoholRow.insertCell().textContent = (5 * totalOilAmount).toFixed(2);
+    bottleSizes.forEach(size => {
+        const alcoholAmount = 5 * (size / 6);
+        alcoholRow.insertCell().textContent = alcoholAmount.toFixed(2);
+    });
+
+    document.getElementById('resultsTable').style.display = 'block'; // Show results table
+}
+</script>
+</body>
+</html>
